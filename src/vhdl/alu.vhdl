@@ -11,7 +11,7 @@ entity alu is
         -- acc clock and load
         acc_clock, acc_load : out std_logic;
         -- mode bits
-        mode_add, mode_sub, mode_xor, mode_and, mode_or, mode_not, mode_shift : in std_logic;
+        mode_add, mode_sub, mode_xor, mode_and, mode_or, mode_not, mode_shl, mode_shr : in std_logic;
         -- ALU clock and reset
         clk, rst : in std_logic
     );
@@ -40,8 +40,10 @@ begin
                     acc_out <= acc_in and dat_in;
                 elsif mode_or = '1' then
                     acc_out <= acc_in or dat_in;
-                elsif mode_shift = '1' then
-                    acc_out <= std_logic_vector(shift_left(unsigned(acc_in),to_integer(unsigned(dat_in)))) when mode_not = '0' else std_logic_vector(shift_right(unsigned(acc_in),to_integer(unsigned(dat_in))));
+                elsif mode_shl = '1' then
+                    acc_out <= std_logic_vector(shift_left(unsigned(acc_in),to_integer(unsigned(dat_in))));
+                elsif mode_shr = '1' then
+                    acc_out <= std_logic_vector(shift_right(unsigned(acc_in),to_integer(unsigned(dat_in))));
                 elsif mode_not = '1' then
                     acc_out <= not acc_in;
                 else acc_out <= acc_in;

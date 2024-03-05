@@ -10,13 +10,14 @@ VHDL_TB := $(SRC)/vhdl_tb
 GHDL_FLAGS := --std=08 --workdir=$(WORK)
 
 
-testbenches := ALU_tb MCU_tb DEC_tb
+testbenches := reg_tb
 
 
 all: bin import $(testbenches)
 
 import:	work
-	ghdl -i $(GHDL_FLAGS) $(VHDL)/*.vhdl $(VHDL_TB)/*.vhdl
+	ghdl -i $(GHDL_FLAGS) $(VHDL)/*.vhdl
+	ghdl -i $(GHDL_FLAGS) $(VHDL_TB)/*.vhdl
 
 run: import wave $(foreach trg,$(testbenches),$(trg).run)
 

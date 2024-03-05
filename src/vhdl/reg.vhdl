@@ -31,13 +31,13 @@ begin
     
     main: process(clk, clr)
     begin
-        if clr = '1' then
+        if to_x01(clr) = '1' then
             q <= (others => '0');
         elsif rising_edge(clk) then
-            if ld = '1' then
+            if to_x01(ld) = '1' then
                 q <= d;
-            elsif inc = '1' then
-                q <= std_logic_vector(to_unsigned(to_integer(unsigned( q )) + 1, 8)) when ind = '1' else std_logic_vector(to_unsigned(to_integer(unsigned( q )) - 1, 8));
+            elsif to_x01(inc) = '1' then
+                q <= std_logic_vector(to_unsigned(to_integer(unsigned( q )) + 1, 8)) when to_x01(ind) = '1' else std_logic_vector(to_unsigned(to_integer(unsigned( q )) - 1, 8));
             end if;
         end if;
     end process main;

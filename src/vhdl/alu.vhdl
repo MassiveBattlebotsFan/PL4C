@@ -25,7 +25,10 @@ begin
     begin
         if rst = '1' then
             acc_out <= (others => 'Z');
+            acc_load <= 'L';
+            acc_clock <= 'L';
         else
+            acc_load <= 'H';
             if rising_edge(clk) then
                 if mode_add = '1' then
                     acc_out <= std_logic_vector(to_unsigned(to_integer(unsigned(acc_in)) + to_integer(unsigned(dat_in)), 8));
@@ -39,8 +42,11 @@ begin
                     acc_out <= acc_in or dat_in;
                 elsif mode_not = '1' then
                     acc_out <= not acc_in;
-                else null;
+                else acc_out <= acc_in;
                 end if;
+                acc_clock <= 'H';
+            else
+                acc_clock <= 'L';
             end if;
         end if;
     end process operation;

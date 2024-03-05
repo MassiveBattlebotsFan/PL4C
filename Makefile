@@ -12,7 +12,7 @@ GHDL_FLAGS := --std=08 --workdir=$(WORK)
 SYNTH_FLAGS := --std=08 --workdir=$(SYNTH)
 
 
-testbenches := reg_tb
+testbenches := reg_tb alu_tb
 
 
 all: bin import $(testbenches)
@@ -31,7 +31,7 @@ run: import wave $(foreach trg,$(testbenches),$(trg).run)
 	ghdl -m -o $(BIN)/$(basename $(notdir $@)) $(GHDL_FLAGS) $(basename $(notdir $@))
 	$(BIN)/$(basename $(notdir $@)).exe --wave=$(WAVE)/$(basename $(notdir $@)).ghw
 
-%_tb:
+%_tb: | work
 	ghdl -m -o $(BIN)/$@ $(GHDL_FLAGS) $@
 
 work:

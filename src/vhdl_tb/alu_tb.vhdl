@@ -15,7 +15,7 @@ architecture behaviour of alu_tb is
     -- acc clock and load
     signal acc_clock, acc_load : std_logic;
     -- mode bits
-    signal mode_add, mode_sub, mode_xor, mode_and, mode_or, mode_not : std_logic;
+    signal mode_add, mode_sub, mode_xor, mode_and, mode_or, mode_not, mode_shift : std_logic;
     signal clk, rst, clr : std_logic;
 
 begin
@@ -45,6 +45,7 @@ begin
             mode_and => mode_and,
             mode_or => mode_or,
             mode_not => mode_not,
+            mode_shift => mode_shift,
             clk => clk,
             rst => rst
         );
@@ -56,25 +57,25 @@ begin
                 dat_in : std_logic_vector(7 downto 0);
                 acc_out : std_logic_vector(7 downto 0);
                 -- mode bits
-                mode_add, mode_sub, mode_xor, mode_and, mode_or, mode_not : std_logic;
+                mode_add, mode_sub, mode_xor, mode_and, mode_or, mode_not, mode_shift : std_logic;
                 rst, clr : std_logic;
             end record pattern_type;
 
             type pattern_array is array (natural range <>) of pattern_type;
 
             constant patterns : pattern_array := (
-                ("--------","--------",'-','-','-','-','-','-','1','1'),
-                ("00000000","ZZZZZZZZ",'0','0','0','0','0','0','1','0'),
-                ("00000001","00000001",'1','0','0','0','0','0','0','0'),
-                ("00000011","00000100",'1','0','0','0','0','0','0','0'),
-                ("00000001","00000100",'0','0','0','0','0','0','0','0'),
-                ("00000001","00000011",'0','1','0','0','0','0','0','0'),
-                ("01101001","01101011",'0','0','0','0','1','0','0','0'),
-                ("00001111","01100100",'0','0','1','0','0','0','0','0'),
-                ("11110000","01100000",'0','0','0','1','0','0','0','0'),
-                ("--------","10011111",'0','0','0','0','0','1','0','0'),
-                ("--------","ZZZZZZZZ",'0','0','0','0','0','0','1','0'),
-                ("--------","10011111",'0','0','0','0','0','0','0','0')
+                ("--------","--------",'-','-','-','-','-','-','0','1','1'),
+                ("00000000","ZZZZZZZZ",'0','0','0','0','0','0','0','1','0'),
+                ("00000001","00000001",'1','0','0','0','0','0','0','0','0'),
+                ("00000011","00000100",'1','0','0','0','0','0','0','0','0'),
+                ("00000001","00000100",'0','0','0','0','0','0','0','0','0'),
+                ("00000001","00000011",'0','1','0','0','0','0','0','0','0'),
+                ("01101001","01101011",'0','0','0','0','1','0','0','0','0'),
+                ("00001111","01100100",'0','0','1','0','0','0','0','0','0'),
+                ("11110000","01100000",'0','0','0','1','0','0','0','0','0'),
+                ("--------","10011111",'0','0','0','0','0','1','0','0','0'),
+                ("--------","ZZZZZZZZ",'0','0','0','0','0','0','0','1','0'),
+                ("--------","10011111",'0','0','0','0','0','0','0','0','0')
             );
 
         begin
@@ -99,7 +100,7 @@ begin
             end loop;
 
             assert false report "Test completed" severity note;
-            
+
             wait;
 
         end process main;

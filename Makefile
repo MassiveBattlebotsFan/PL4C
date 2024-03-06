@@ -12,7 +12,7 @@ GHDL_FLAGS := --std=08 --workdir=$(WORK)
 SYNTH_FLAGS := --std=08 --workdir=$(SYNTH)
 
 
-testbenches := reg_tb alu_tb
+testbenches := reg_tb alu_tb rcu_tb
 
 
 all: bin import $(testbenches)

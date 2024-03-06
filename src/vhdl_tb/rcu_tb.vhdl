@@ -16,9 +16,9 @@ architecture behaviour of rcu_tb is
     signal alu_clk : std_logic;
     signal alu_q : std_logic_vector(7 downto 0);
     -- data bus
-    signal dbus : std_logic_vector(7 downto 0);
+    signal dbus_in, dbus_out : std_logic_vector(7 downto 0);
     -- RCU clock + reset
-    signal clk, rst : std_logic := '0';
+    signal clk : std_logic := '0';
 
 begin
     
@@ -32,9 +32,9 @@ begin
         alu_clr => alu_clr,
         alu_clk => alu_clk,
         alu_q => alu_q,
-        dbus => dbus,
-        clk => clk,
-        rst => rst
+        dbus_in => dbus_in,
+        dbus_out => dbus_out,
+        clk => clk
     );
 
     main: process
@@ -61,30 +61,39 @@ begin
         -- ACC, BAK, VEC, CTR, INT, LB, UB, PG
         
         constant patterns : pattern_array := (
+            ("01000001","00000000","--------"),
             ("00001000","10101010","--------"),
             ("10000001","--------","--------"),
-            ("00000000","--------","10101010")
+            ("00000000","--------","10101010"),
+            ("00000001","01010101","--------"),
+            ("11001000","--------","--------"),
+            ("00000000","--------","01010101"),
+            ("00001001","--------","10101010")
         );
 
     begin
         
         for i in patterns'range loop
             
-            rst <= '1';
-            wait for 0.25 ns;
-            rst <= '0';
-            dbus <= patterns(i).dbus_in;
+            alu_clk <= '0';
+            alu_clr <= '0';
+            alu_d <= (others => '0');
+            alu_ld <= '0';
+            dbus_in <= patterns(i).dbus_in;
             reg_inc_txfer <= patterns(i).command(7);
             reg_clr_ind <= patterns(i).command(6);
             reg_source <= patterns(i).command(5 downto 3);
             reg_target <= patterns(i).command(2 downto 0);
+            --rst <= '1';
             clk <= '0';
-            wait for 0.25 ns;
+            wait for 0.5 ns;
+            --rst <= '0';
             clk <= '1';
             wait for 0.5 ns;
+            --wait for 0.5 ns;
             
             if patterns(i).dbus_out /= "--------" then
-                assert dbus = patterns(i).dbus_out report "Data bus in bad state" severity error;
+                assert dbus_out = patterns(i).dbus_out report "Data bus in bad state" severity error;
             end if;
         end loop;
         

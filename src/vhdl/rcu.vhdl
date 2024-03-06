@@ -24,9 +24,10 @@ entity rcu is
         alu_clk : in std_logic;
         alu_q : out std_logic_vector(7 downto 0);
         -- data bus
-        dbus : inout std_logic_vector(7 downto 0);
+        dbus_in : in std_logic_vector(7 downto 0);
+        dbus_out : out std_logic_vector(7 downto 0);
         -- RCU clock + reset
-        clk, rst : in std_logic := '0'
+        clk : in std_logic := '0'
     );
 end entity rcu;
 
@@ -39,19 +40,25 @@ architecture rtl of rcu is
 
     type reg_conn_array is array (natural range <>) of reg_conn_type;
 
-    signal reg_conn : reg_conn_array(0 to 7);
+    signal reg_conn : reg_conn_array(0 to 7) := (
+        ("00000000","ZZZZZZZZ",'0','1','0'),
+        ("00000000","ZZZZZZZZ",'0','1','0'),
+        ("00000000","ZZZZZZZZ",'0','1','0'),
+        ("00000000","ZZZZZZZZ",'0','1','0'),
+        ("00000000","ZZZZZZZZ",'0','1','0'),
+        ("00000000","ZZZZZZZZ",'0','1','0'),
+        ("00000000","ZZZZZZZZ",'0','1','0'),
+        ("00000000","ZZZZZZZZ",'0','1','0')
+    );
 
     -- CTR increment and increment direction
     signal ctr_inc, ctr_ind : std_logic;
-    -- swap register
-    signal reg_swap : std_logic_vector(7 downto 0);
-
 begin
     
     -- ACC register is special
     -- registers:
     -- ACC, BAK, VEC, CTR, INT, LB, UB, PG
-    
+
     gen_reg: for i in 0 to 7 generate
         ctr_gen: if i = 3 generate
             reg_ctr : entity work.reg_generic(rtl)
@@ -68,7 +75,7 @@ begin
         end generate ctr_gen;
 
         all_but_ctr_gen: if i /= 3 generate    
-            regx : entity work.reg_generic(rtl)
+            REGX : entity work.reg_generic(rtl)
                 generic map(register_width => 8)
                 port map(
                     d => reg_conn(i).d,
@@ -82,28 +89,9 @@ begin
         end generate all_but_ctr_gen;
     end generate gen_reg;  
     
-    main: process(clk,rst,alu_d,alu_ld,alu_clr,alu_clk)
+    main: process(all)
     begin
-        if rst = '1' then
-            
-            reg_conn(0).d <= alu_d;
-            reg_conn(0).ld <= alu_ld;
-            reg_conn(0).clr <= alu_clr;
-            reg_conn(0).clk <= alu_clk;
-            
-            for i in 1 to 7 loop
-                reg_conn(i).d <= (others => 'Z');
-                reg_conn(i).ld <= '0';
-                reg_conn(i).clr <= '0';
-                reg_conn(i).clk <= '0';
-            end loop;
-
-            ctr_ind <= '0';
-            ctr_inc <= '0';
-
-            dbus <= (others => 'Z');
-
-        elsif rising_edge(clk) then
+        if rising_edge(clk) then
             
             if to_x01(reg_inc_txfer) = '0' then
                 -- if both these bits are 0 we're in read or write mode
@@ -113,10 +101,10 @@ begin
                         reg_conn(to_integer(unsigned(reg_target))).ld <= '0';
                         reg_conn(to_integer(unsigned(reg_target))).clr <= '0';
                         reg_conn(to_integer(unsigned(reg_target))).clk <= '0';
-                        dbus <= reg_conn(to_integer(unsigned(reg_target))).q;
+                        dbus_out <= reg_conn(to_integer(unsigned(reg_target))).q;
                     else
                         reg_conn(to_integer(unsigned(reg_target))).clr <= '0';
-                        reg_conn(to_integer(unsigned(reg_target))).d <= dbus;
+                        reg_conn(to_integer(unsigned(reg_target))).d <= dbus_in;
                         reg_conn(to_integer(unsigned(reg_target))).ld <= '1';
                         reg_conn(to_integer(unsigned(reg_target))).clk <= '1';
                     end if;
@@ -124,6 +112,7 @@ begin
                     -- clr mode set, clear source + target register
                     reg_conn(to_integer(unsigned(reg_source))).clr <= '1';
                     reg_conn(to_integer(unsigned(reg_target))).clr <= '1';
+                    reg_conn(to_integer(unsigned(reg_target))).clk <= '1';
                 end if;
             else
                 -- either in increment or transfer mode
@@ -143,9 +132,9 @@ begin
                         reg_conn(to_integer(unsigned(reg_target))).ld <= '1';
                         reg_conn(to_integer(unsigned(reg_target))).clr <= '0';
 
-                        reg_swap <= reg_conn(to_integer(unsigned(reg_source))).q;
+                        --reg_swap <= reg_conn(to_integer(unsigned(reg_source))).q;
                         reg_conn(to_integer(unsigned(reg_source))).d <= reg_conn(to_integer(unsigned(reg_target))).q;
-                        reg_conn(to_integer(unsigned(reg_target))).d <= reg_swap;
+                        reg_conn(to_integer(unsigned(reg_target))).d <= reg_conn(to_integer(unsigned(reg_source))).q;
                         
                         reg_conn(to_integer(unsigned(reg_source))).clk <= '1';
                         reg_conn(to_integer(unsigned(reg_target))).clk <= '1';
@@ -158,9 +147,27 @@ begin
                     end if;
                 end if;
             end if;
+        elsif clk = '0' then
+            reg_conn(0).d <= alu_d;
+            reg_conn(0).ld <= alu_ld;
+            reg_conn(0).clr <= alu_clr;
+            reg_conn(0).clk <= alu_clk;
+            alu_q <= reg_conn(0).q;
+            
+            for i in 1 to 7 loop
+                reg_conn(i).d <= (others => 'Z');
+                reg_conn(i).ld <= '0';
+                reg_conn(i).clr <= '0';
+                reg_conn(i).clk <= '0';
+                reg_conn(i).q <= (others => 'W');
+            end loop;
+
+            ctr_ind <= '0';
+            ctr_inc <= '0';
+
+            dbus_out <= (others => 'Z');
         end if;
     end process main;
 
-    alu_q <= reg_conn(0).q;
 
 end architecture rtl;

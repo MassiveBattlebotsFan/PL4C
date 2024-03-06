@@ -12,8 +12,8 @@ architecture behaviour of mcu_tb is
     signal mode_bit, mode_rw, clk, rst : std_logic;
     -- RAM stuff
     signal ram_addr : std_logic_vector(31 downto 0);
-    signal ram_data : std_logic_vector(7 downto 0);
-    signal ram_write, ram_read, ram_clock : std_logic;
+    signal ram_data_read, ram_data_write : std_logic_vector(7 downto 0);
+    signal ram_write_en, ram_clock : std_logic;
 
 begin
     
@@ -29,10 +29,18 @@ begin
         clk => clk,
         rst => rst,
         ram_addr => ram_addr,
-        ram_data => ram_data,
-        ram_write => ram_write,
-        ram_read => ram_read,
+        ram_data_write => ram_data_write,
+        ram_data_read => ram_data_read,
+        ram_write_en => ram_write_en,
         ram_clock => ram_clock
+    );
+
+    ram0 : entity work.ram_template(rtl) port map(
+        data_in => ram_data_write,
+        data_out => ram_data_read,
+        write_en => ram_write_en,
+        clk => ram_clock,
+        addr => ram_addr
     );
 
     main: process
@@ -51,7 +59,8 @@ begin
             ("10010000","00001001","00000000","00000001","01101010",'0','0','0',"--------"),
             ("10010000","00001001","00000000","00000010","00000101",'0','1','0',"--------"),
             ("10010000","00001001","00010100","11100110","00101100",'1','0','0',"--------"),
-            ("10010000","00001001","00010100","11100111","01001110",'1','1','0',"--------")
+            ("10010000","00001001","00010100","11100111","01001110",'1','1','0',"--------"),
+            ("00000000","00000000","00000000","00000010","00000000",'0','0','0',"--------")
         );
 
     begin
@@ -65,12 +74,12 @@ begin
             dbus_in <= patterns(i).dbus_in;
             mode_bit <= patterns(i).mode_bit;
             mode_rw <= patterns(i).mode_rw;
-            rst <= patterns(i).rst;
+            --rst <= patterns(i).rst;
 
-            --rst <= '1';
+            rst <= '1';
             clk <= '0';
             wait for 0.5 ns;
-            --rst <= '0';
+            rst <= '0';
             clk <= '1';
             wait for 0.5 ns;
             --wait for 0.5 ns;

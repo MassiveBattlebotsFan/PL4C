@@ -17,8 +17,9 @@ entity mcu is
         mode_bit, mode_rw, clk, rst : in std_logic := '0';
         -- RAM address and data bus
         ram_addr : out std_logic_vector(31 downto 0) := "00000000000000001111111111111100";
-        ram_data : inout std_logic_vector(7 downto 0);
-        ram_write, ram_read, ram_clock : out std_logic
+        ram_data_read : in std_logic_vector(7 downto 0);
+        ram_data_write : out std_logic_vector(7 downto 0);
+        ram_write_en, ram_clock : out std_logic
     );
 end entity mcu;
 
@@ -31,29 +32,25 @@ begin
         if clk = '0' then
             
             ram_clock <= '0';
-            ram_write <= '0';
-            ram_read <= '0';
-            ram_data <= (others => 'Z');
+            ram_write_en <= '0';
             
         elsif rising_edge(clk) then
-            -- set RAM address based on mode bit
-            if mode_bit = '1' then
-                ram_addr <= upper_bank & lower_bank & page & address;
+
+            ram_write_en <= '1' when mode_rw = '1' else '0';
+            if mode_rw = '1' then
+                -- write on a 1
+                -- set RAM address based on mode bit
+                ram_addr(31 downto 16) <= upper_bank & lower_bank when mode_bit = '1' else "0000000000000000";
+                ram_addr(15 downto 0) <= page & address;
+                ram_data_write <= dbus_in;
             else
-                ram_addr(31 downto 16) <= (others => '0');
+                ram_addr(31 downto 16) <= upper_bank & lower_bank when mode_bit = '1' else "0000000000000000";
                 ram_addr(15 downto 0) <= page & address;
             end if;
-            -- write on a 1
-            if mode_rw = '1' then
-                ram_data <= dbus_in;
-            end if;            
-            ram_write <= '1' when mode_rw = '1' else '0';
-            ram_read <= '1' when mode_rw = '0' else '1';
             ram_clock <= '1';
-            
-            
+
         end if;
     end process main;
-    dbus_out <= (others => 'Z') when rst = '1' else ram_data;
+    dbus_out <= (others => 'Z') when rst = '1' else ram_data_read;
             
 end architecture rtl;

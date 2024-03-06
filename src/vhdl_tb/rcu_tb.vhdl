@@ -7,7 +7,8 @@ end entity rcu_tb;
 
 architecture behaviour of rcu_tb is
     
-    signal reg_select : std_logic_vector(7 downto 0);
+    signal reg_inc_txfer, reg_clr_ind : std_logic;
+    signal reg_source, reg_target : std_logic_vector(2 downto 0);
     -- ACC passthrough for ALU
     signal alu_d : std_logic_vector(7 downto 0);
     signal alu_ld : std_logic;
@@ -22,7 +23,10 @@ architecture behaviour of rcu_tb is
 begin
     
     rcu0 : entity work.rcu(rtl) port map (
-        reg_select => reg_select,
+        reg_inc_txfer => reg_inc_txfer,
+        reg_clr_ind => reg_clr_ind,
+        reg_source => reg_source,
+        reg_target => reg_target,
         alu_d => alu_d,
         alu_ld => alu_ld,
         alu_clr => alu_clr,

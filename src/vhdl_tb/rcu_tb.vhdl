@@ -38,8 +38,59 @@ begin
     );
 
     main: process
+
+        type pattern_type is record
+            command : std_logic_vector(7 downto 0);
+            dbus_in, dbus_out : std_logic_vector(7 downto 0);
+            --rst : std_logic;
+        end record pattern_type;
+
+        type pattern_array is array (natural range <>) of pattern_type;
+
+        -- RCU modes
+        -- RCU register select
+        -- bit layout is:
+        -- 7 6 5 4 3 2 1 0
+        -- 7: increment mode or txfer if not target ctr
+        -- 6: increment sign or clear if not increment mode
+        -- 3-5: source register (n/a if bit 6 or 7)
+        -- 0-2: target register
+        -- reg_select : in std_logic_vector(7 downto 0);
+        -- 
+        -- registers in order:
+        -- ACC, BAK, VEC, CTR, INT, LB, UB, PG
+        
+        constant patterns : pattern_array := (
+            ("00001000","10101010","--------"),
+            ("10000001","--------","--------"),
+            ("00000000","--------","10101010")
+        );
+
     begin
+        
+        for i in patterns'range loop
+            
+            rst <= '1';
+            wait for 0.25 ns;
+            rst <= '0';
+            dbus <= patterns(i).dbus_in;
+            reg_inc_txfer <= patterns(i).command(7);
+            reg_clr_ind <= patterns(i).command(6);
+            reg_source <= patterns(i).command(5 downto 3);
+            reg_target <= patterns(i).command(2 downto 0);
+            clk <= '0';
+            wait for 0.25 ns;
+            clk <= '1';
+            wait for 0.5 ns;
+            
+            if patterns(i).dbus_out /= "--------" then
+                assert dbus = patterns(i).dbus_out report "Data bus in bad state" severity error;
+            end if;
+        end loop;
+        
+        assert false report "Test completed" severity note;
         wait;
+
     end process main;
     
 end architecture behaviour;
